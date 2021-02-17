@@ -16,9 +16,13 @@ private:
     //method
     void pose_callback(const turtlesim::Pose::ConstPtr &);
     void go_straight();
+    void draw_square(int);
 
     //parameter
     int hz;
+
+    double X;
+    double Y;
 
     //member
     ros::NodeHandle nh;

@@ -18,25 +18,98 @@ void MyTurtlesimController::go_straight()
 {
     std::cout<<current_pose<<std::endl;
     geometry_msgs::Twist cmd_vel;
-    cmd_vel.linear.x = 0.1;
+    cmd_vel.linear.x = 0.5;
     pub_cmd_vel.publish(cmd_vel);
 }
-// void MyTurtlesimController::draw_square()
-// {
-//      std::cout<<current_pose<<std::endl;
-//      geometry_msgs::Twist cmd_vel;
+
+void turn()
+{
+    for(int i=0;i<16;i++)
+    {
+        cmd_vel.angular.z = 0.1;
+    }
+
+}
+
+void MyTurtlesimController::draw_square(int i)
+{
+      std::cout<<current_pose<<std::endl;
+      geometry_msgs::Twist cmd_vel;
+
+      if(i==10)
+      {
+          X = current_pose.x;
+          Y = current_pose.y;
+      }
+
+      std::cout<<X<<std::endl;
+      std::cout<<Y<<std::endl;
+
+      turn;
+      go_straight();
+
+/*      if(current_pose.theta < 0)
+      {
+          current_pose.theta += 2*M_PI;
+      }
+
+      if(current_pose.theta >= M_PI/2)
+      {
+          cmd_vel.angular.z = 0.0;
+          cmd_vel.linear.x = 0.5;
+          if(current_pose.y-Y >= 2)
+          {
+              cmd_vel.linear.x = 0.0;
+              cmd_vel.angular.z = 0.1;
+              if(current_pose.theta >= M_PI)
+              {
+                  cmd_vel.angular.z = 0.0;
+                  cmd_vel.linear.x = 0.5;
+                  if(X-current_pose.x >= 2)
+                  {
+                      cmd_vel.linear.x = 0.0;
+                      cmd_vel.angular.z = 0.1;
+                      if(current_pose.theta >= 3/2*M_PI)
+                      {
+                          cmd_vel.angular.z = 0.0;
+                          cmd_vel.linear.x = 0.5;
+
+                      }
+                  }
+              }
+
+          }
+
+      }
+
 //
-// }
+//      th = current_pose.theta;
+//      turn = th + M_PI/2;
 //
+//      cmd_vel.angular.z = 0.1;
+//      if(current_pose.theta > turn)
+//      {
+//          cmd_vel.linear.x = 0.5;
+//      }
+*/
+
+      pub_cmd_vel.publish(cmd_vel);
+
+
+}
+
 
 void MyTurtlesimController::process()
 {
     ros::Rate loop_rate(hz);
+    int i=0;
     while(ros::ok())
     {
-        go_straight();
+        //go_straight();
+        draw_square(i);
         ros::spinOnce();
         loop_rate.sleep();
+        i++;
     }
 }
 
