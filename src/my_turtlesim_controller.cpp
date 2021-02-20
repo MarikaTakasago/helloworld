@@ -11,7 +11,28 @@ MyTurtlesimController::MyTurtlesimController():private_nh("")
 
 void MyTurtlesimController::pose_callback(const turtlesim::Pose::ConstPtr &msg)
 {
+    old_x = current_pose.x;
+    old_y = current_pose.y;
+    old_theta = current_pose.theta;
+
     current_pose = *msg;
+
+    dx = current_pose.x - old_x;
+    dy = current_pose.y - old_y;
+    dtheta = current_pose.theta - old_theta;
+    if(dx<0)
+    {
+        dx = -dx;
+    }
+    if(dy<0)
+    {
+        dy = -dy;
+    }
+    if(dtheta>M_PI)
+    {
+        dtheta -= M_PI;
+    }
+
 }
 
 void MyTurtlesimController::go_straight()
@@ -22,15 +43,6 @@ void MyTurtlesimController::go_straight()
     pub_cmd_vel.publish(cmd_vel);
 }
 
-void turn()
-{
-    for(int i=0;i<16;i++)
-    {
-        cmd_vel.angular.z = 0.1;
-    }
-
-}
-
 void MyTurtlesimController::draw_square(int i)
 {
       std::cout<<current_pose<<std::endl;
@@ -38,15 +50,67 @@ void MyTurtlesimController::draw_square(int i)
 
       if(i==10)
       {
-          X = current_pose.x;
-          Y = current_pose.y;
+          sum_x = 0;
+          sum_y = 0;
+          sum_theta = 0;
+          //old_x = current_pose.x;
+          //old_y = current_pose.y;
+          //old_theta = current_pose.theta;
       }
 
-      std::cout<<X<<std::endl;
-      std::cout<<Y<<std::endl;
+      //sum_x += (current_pose.x - old_x)*10;
+      //sum_theta += (current_pose.theta - old_theta);
 
-      turn;
-      go_straight();
+      std::cout<<old_x<<std::endl;
+      std::cout<<old_y<<std::endl;
+
+      if(sum_x >= 4 || sum_y >=4)
+      {
+          //kaiten
+          cmd_vel.linear.x = 0.0;
+          cmd_vel.angular.z = 0.1;
+          sum_theta += dtheta;
+
+      }
+
+      /*if(sum_y >= 2)
+      {
+          cmd_vel.linear.x = 0.0;
+          cmd_vel.angular.z = 0.1;
+          sum_theta += dtheta;
+
+      }*/
+
+      if(sum_theta >= 0.25)
+      {
+          cmd_vel.angular.z = 0.0;
+          sum_x = 0.0;
+          sum_y = 0.0;
+          sum_theta = 0.0;
+
+      }
+
+      if(sum_x < 4 && sum_y < 4)
+      {
+          cmd_vel.linear.x = 0.5;
+          cmd_vel.angular.z = 0.0;
+          sum_x += dx*10;
+          sum_y += dy*10;
+      }
+
+      std::cout<<sum_x<<std::endl;
+      std::cout<<sum_y<<std::endl;
+      std::cout<<sum_theta<<std::endl;
+      std::cout<<current_pose.theta<<std::endl;
+
+      /*if(current_pose.x - old_x <= 2)
+      {
+          //chokusin
+          cmd_vel.angular.z = 0.0;
+          cmd_vel.linear.x = 0.5;
+          old_theta = current_pose.theta;
+
+      }*/
 
 /*      if(current_pose.theta < 0)
       {
@@ -82,15 +146,6 @@ void MyTurtlesimController::draw_square(int i)
 
       }
 
-//
-//      th = current_pose.theta;
-//      turn = th + M_PI/2;
-//
-//      cmd_vel.angular.z = 0.1;
-//      if(current_pose.theta > turn)
-//      {
-//          cmd_vel.linear.x = 0.5;
-//      }
 */
 
       pub_cmd_vel.publish(cmd_vel);
@@ -103,6 +158,7 @@ void MyTurtlesimController::process()
 {
     ros::Rate loop_rate(hz);
     int i=0;
+
     while(ros::ok())
     {
         //go_straight();
