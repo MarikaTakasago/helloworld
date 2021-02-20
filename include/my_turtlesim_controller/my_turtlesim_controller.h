@@ -21,8 +21,15 @@ private:
     //parameter
     int hz;
 
-    double X;
-    double Y;
+    double old_x;
+    double old_y;
+    double old_theta;
+    double sum_x;
+    double sum_y;
+    double sum_theta;
+    double dx;
+    double dy;
+    double dtheta;
 
     //member
     ros::NodeHandle nh;
