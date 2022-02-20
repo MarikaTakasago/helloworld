@@ -1,171 +1,67 @@
 #include "my_turtlesim_controller/my_turtlesim_controller.h"
 
-MyTurtlesimController::MyTurtlesimController():private_nh("")
+MyTurtlesimController::MyTurtlesimController():private_nh("~")
 {
-    private_nh.param("hz",hz,{10});
+    private_nh.getParam("hz",hz);
+    private_nh.getParam("N",N);
+    private_nh.getParam("len",len);
 
     sub_pose = nh.subscribe("/turtle1/pose",10,&MyTurtlesimController::pose_callback,this);
 
     pub_cmd_vel = nh.advertise<geometry_msgs::Twist>("/turtle1/cmd_vel",1);
+
 }
 
 void MyTurtlesimController::pose_callback(const turtlesim::Pose::ConstPtr &msg)
 {
-    old_x = current_pose.x;
-    old_y = current_pose.y;
-    old_theta = current_pose.theta;
-
+    outside = double(2*M_PI/N);
+    old_pose = current_pose;
     current_pose = *msg;
+    if(!pose_checker) old_pose = current_pose;
 
-    dx = current_pose.x - old_x;
-    dy = current_pose.y - old_y;
-    dtheta = current_pose.theta - old_theta;
-    if(dx<0)
-    {
-        dx = -dx;
-    }
-    if(dy<0)
-    {
-        dy = -dy;
-    }
-    if(dtheta>M_PI)
-    {
-        dtheta -= M_PI;
-    }
-
+    dx = fabs(current_pose.x - old_pose.x);
+    dy = fabs(current_pose.y - old_pose.y);
+    dl = sqrt(dx*dx + dy*dy);
+    if(current_pose.theta * old_pose.theta < 0) dtheta = 0;
+    else dtheta = fabs(current_pose.theta - old_pose.theta);
+    pose_checker = true;
 }
 
 void MyTurtlesimController::go_straight()
 {
-    std::cout<<current_pose<<std::endl;
+    // std::cout<<current_pose<<std::endl;
     geometry_msgs::Twist cmd_vel;
     cmd_vel.linear.x = 0.5;
     pub_cmd_vel.publish(cmd_vel);
+    l += dl;
+    std::cout<<"l="<<l<<std::endl;
+    if(l >= len/10) theta_sum = 0;
 }
-
-void MyTurtlesimController::draw_square(int i)
+void MyTurtlesimController::turn()
 {
-      std::cout<<current_pose<<std::endl;
-      geometry_msgs::Twist cmd_vel;
-
-      if(i==10)
-      {
-          sum_x = 0;
-          sum_y = 0;
-          sum_theta = 0;
-          //old_x = current_pose.x;
-          //old_y = current_pose.y;
-          //old_theta = current_pose.theta;
-      }
-
-      //sum_x += (current_pose.x - old_x)*10;
-      //sum_theta += (current_pose.theta - old_theta);
-
-      std::cout<<old_x<<std::endl;
-      std::cout<<old_y<<std::endl;
-
-      if(sum_x >= 4 || sum_y >=4)
-      {
-          //kaiten
-          cmd_vel.linear.x = 0.0;
-          cmd_vel.angular.z = 0.1;
-          sum_theta += dtheta;
-
-      }
-
-      /*if(sum_y >= 2)
-      {
-          cmd_vel.linear.x = 0.0;
-          cmd_vel.angular.z = 0.1;
-          sum_theta += dtheta;
-
-      }*/
-
-      if(sum_theta >= 0.25)
-      {
-          cmd_vel.angular.z = 0.0;
-          sum_x = 0.0;
-          sum_y = 0.0;
-          sum_theta = 0.0;
-
-      }
-
-      if(sum_x < 4 && sum_y < 4)
-      {
-          cmd_vel.linear.x = 0.5;
-          cmd_vel.angular.z = 0.0;
-          sum_x += dx*10;
-          sum_y += dy*10;
-      }
-
-      std::cout<<sum_x<<std::endl;
-      std::cout<<sum_y<<std::endl;
-      std::cout<<sum_theta<<std::endl;
-      std::cout<<current_pose.theta<<std::endl;
-
-      /*if(current_pose.x - old_x <= 2)
-      {
-          //chokusin
-          cmd_vel.angular.z = 0.0;
-          cmd_vel.linear.x = 0.5;
-          old_theta = current_pose.theta;
-
-      }*/
-
-/*      if(current_pose.theta < 0)
-      {
-          current_pose.theta += 2*M_PI;
-      }
-
-      if(current_pose.theta >= M_PI/2)
-      {
-          cmd_vel.angular.z = 0.0;
-          cmd_vel.linear.x = 0.5;
-          if(current_pose.y-Y >= 2)
-          {
-              cmd_vel.linear.x = 0.0;
-              cmd_vel.angular.z = 0.1;
-              if(current_pose.theta >= M_PI)
-              {
-                  cmd_vel.angular.z = 0.0;
-                  cmd_vel.linear.x = 0.5;
-                  if(X-current_pose.x >= 2)
-                  {
-                      cmd_vel.linear.x = 0.0;
-                      cmd_vel.angular.z = 0.1;
-                      if(current_pose.theta >= 3/2*M_PI)
-                      {
-                          cmd_vel.angular.z = 0.0;
-                          cmd_vel.linear.x = 0.5;
-
-                      }
-                  }
-              }
-
-          }
-
-      }
-
-*/
-
-      pub_cmd_vel.publish(cmd_vel);
-
-
+    geometry_msgs::Twist cmd_vel;
+    cmd_vel.angular.z = 0.1;
+    pub_cmd_vel.publish(cmd_vel);
+    theta_sum += dtheta*2*M_PI;
+    std::cout<<"theta_sum="<<theta_sum<<std::endl;
+    if(theta_sum >= outside) l=0;
 }
 
+void MyTurtlesimController::square()
+{
+    if(l >= len/10) turn();
+    else go_straight();
+}
 
 void MyTurtlesimController::process()
 {
     ros::Rate loop_rate(hz);
-    int i=0;
-
     while(ros::ok())
     {
         //go_straight();
-        draw_square(i);
+        square();
         ros::spinOnce();
         loop_rate.sleep();
-        i++;
     }
 }
 

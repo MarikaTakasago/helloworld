@@ -2,7 +2,9 @@
 <launch>
     <node pkg="turtlesim" name="turtlesim_node" type="turtlesim_node"/>
     <node pkg="helloworld" name="my_turtlesim_controller" type="my_turtlesim_controller" output="screen">
-        <param name="hz" value="10"/>
+        <param name="hz" value="10" type="int"/>
+        <param name="N" value="100" type="int"/>
+        <param name="len" value="0.1" type="double"/>
     </node>
 </launch>
 
