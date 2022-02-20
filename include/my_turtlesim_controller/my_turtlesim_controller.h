@@ -49,5 +49,6 @@ private:
     ros::Publisher pub_cmd_vel;
     turtlesim::Pose old_pose;
     turtlesim::Pose current_pose;
+    geometry_msgs::Twist cmd_vel;
 };
 #endif
